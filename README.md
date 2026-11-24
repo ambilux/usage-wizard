@@ -9,9 +9,9 @@ Small local tools that show how you use Claude Code, based on the session logs i
 > "Claude" and "Claude Code" are trademarks of Anthropic.
 
 <p align="center">
-  <img src="docs/panel.png" alt="Menu bar panel: context size, cache countdown and suggestions" width="300">
+  <img src="docs/panel.png" alt="Menu bar panel: chat list by folder, context size, cache countdown and suggestions" width="300">
   &nbsp;
-  <img src="docs/dashboard.png" alt="Dashboard: context per response, tokens per day, where the cost went" width="500">
+  <img src="docs/dashboard.png" alt="Dashboard: context per response, tokens per day, where the cost went, sessions grouped by folder" width="500">
 </p>
 <p align="center"><sub>Menu bar panel and dashboard (example data)</sub></p>
 
