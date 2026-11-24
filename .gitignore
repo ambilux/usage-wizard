@@ -1,0 +1,16 @@
+# Generated output (contains personal usage data)
+dashboard.html
+
+# Build output
+menubar/build/
+
+# Local working files
+.handoffs/
+
+# Generated icon images (drawn by the build scripts)
+menubar/AppIcon.icns
+menubar/icon/*.png
+
+# macOS / editor
+.DS_Store
+.claude/settings.local.json
