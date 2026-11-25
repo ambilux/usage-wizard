@@ -32,6 +32,8 @@ struct Session: Identifiable {
     var turns: [Turn]
     var tools: [String: Int]
     var cost: Double?
+    /// Last message in the chat (yours or Claude's). Not the log file's time: Claude touches the log when you
+    /// click a chat, but not when you click back to one already loaded, so following clicks would be unreliable.
     var modified: Date
     var prompts: [String] = []       // only user prompts that mention .handoffs/, oldest first
     var hasReply = false              // Claude has answered with text (reply itself is not kept)
@@ -101,6 +103,7 @@ final class LogFile {
     private var cost: Double?
     private var prompts: [String] = []
     private var hasReply = false
+    private var lastMessage: Date?
     private(set) var modified: Date = .distantPast
     private(set) var session: Session?
 
@@ -125,13 +128,17 @@ final class LogFile {
 
     private func reset() {
         offset = 0; order = []; turns = [:]; tools = [:]; title = nil; cwd = nil; cost = nil
-        prompts = []; hasReply = false
+        prompts = []; hasReply = false; lastMessage = nil
     }
 
     private func consume(_ line: Data.SubSequence) {
         guard let obj = try? JSONSerialization.jsonObject(with: Data(line)) as? [String: Any] else { return }
         let type = obj["type"] as? String
         if cwd == nil, let c = obj["cwd"] as? String { cwd = c }
+        if type == "assistant" || (type == "user" && obj["isMeta"] as? Bool != true),
+           let tsStr = obj["timestamp"] as? String, let ts = LogParser.iso.date(from: tsStr) {
+            lastMessage = max(lastMessage ?? ts, ts)
+        }
         if type == "custom-title" { title = obj["customTitle"] as? String }
         if type == "cost-state" { cost = obj["totalCostUSD"] as? Double }
         if type == "user", obj["isMeta"] as? Bool != true, let msg = obj["message"] as? [String: Any] {
@@ -182,7 +189,7 @@ final class LogFile {
             ?? url.deletingLastPathComponent().lastPathComponent
         return Session(id: url.path,
                        title: title ?? String(url.deletingPathExtension().lastPathComponent.prefix(8)),
-                       project: project, cwd: cwd, turns: list, tools: tools, cost: cost, modified: modified,
+                       project: project, cwd: cwd, turns: list, tools: tools, cost: cost, modified: lastMessage ?? modified,
                        prompts: prompts, hasReply: hasReply)
     }
 }
@@ -220,12 +227,13 @@ final class UsageStore: ObservableObject {
     }
 
     /// Wakes the app only when Claude Code writes a log. macOS bundles the writes of one
-    /// reply (latency 1.5 s), so a running chat updates almost live without constant parsing.
+    /// reply (latency 0.3 s), so a new message shows up almost at once. Each refresh
+    /// only reads lines appended since the last one, so the short latency costs next to nothing.
     private func startWatching() {
         guard stream == nil, FileManager.default.fileExists(atPath: LogParser.root.path) else { return }
         let callback: FSEventStreamCallback = { _, _, _, _, _, _ in UsageStore.shared.refresh() }
         guard let s = FSEventStreamCreate(nil, callback, nil, [LogParser.root.path] as CFArray,
-                                          FSEventStreamEventId(kFSEventStreamEventIdSinceNow), 1.5,
+                                          FSEventStreamEventId(kFSEventStreamEventIdSinceNow), 0.3,
                                           FSEventStreamCreateFlags(kFSEventStreamCreateFlagNone)) else { return }
         FSEventStreamSetDispatchQueue(s, queue)
         if FSEventStreamStart(s) { stream = s } else { FSEventStreamInvalidate(s); FSEventStreamRelease(s) }

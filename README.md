@@ -34,7 +34,8 @@ Usage Wizard makes this visible and helps you act at the right moment:
 ### Menu bar
 
 - **Live context size** of your latest chat next to the icon (icon and number can be
-  changed in Settings).
+  changed in Settings). Latest = where you or Claude wrote last; just clicking a chat in
+  Claude doesn't switch it.
 - Click it for the **panel**:
   - **Chat menu** at the top, **gear** for Settings, and the **expand** button for the
     dashboard window. **▶** marks the chat shown now (and its folder); **♨** in front of
@@ -172,12 +173,13 @@ to clean up there.
 ## Privacy
 
 - Everything runs locally: no network access, no third-party packages, no telemetry.
-- Only reads `~/.claude/projects`. Your data never leaves your Mac.
-- Keeps only token counts and sizes in memory, not your chat contents (the one
+- Only reads `~/.claude/projects`. In your project folders it only checks whether a
+  handoff note or a `CLAUDE.md` exists. Your data never leaves your Mac.
+- Keeps only token counts, sizes and times in memory, not your chat contents (the one
   exception: your prompts that mention a handoff note, to see when a note was used).
-- The only files it writes are handoff notes in `.handoffs/` of your project
-  (Claude writes them when you ask). Add `.handoffs/` to your `.gitignore` if you
-  don't want them committed.
+- It writes no files itself: handoff notes in `.handoffs/` of your project are written by
+  Claude when you ask, and Usage Wizard only moves used ones to the Trash (can be turned
+  off in Settings). Add `.handoffs/` to your `.gitignore` if you don't want them committed.
 - The generated `dashboard.html` contains your own usage data and project names –
   don't commit or share it (it is listed in `.gitignore`).
 
